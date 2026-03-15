@@ -1,0 +1,24 @@
+{
+  "name": "s01-agent-loop",
+  "version": "1.0.0",
+  "description": "s01: The minimal agent loop — one tool + one loop = an agent",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node agent.ts",
+    "dev": "ts-node agent.ts",
+    "demo": "ts-node demo.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
+    "@anthropic-ai/sdk": "^0.54.0",
+    "ai": "^6.0.116",
+    "dotenv": "^16.4.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}
