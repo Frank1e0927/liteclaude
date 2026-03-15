@@ -59,10 +59,14 @@ export function bashTool(command: string): string {
   // 执行前检查危险命令
   checkDangerous(command);
 
+  // Windows cmd.exe 默认 GBK，切换为 UTF-8（代码页 65001）避免中文乱码
+  const wrappedCommand =
+    process.platform === "win32" ? `chcp 65001 >nul && ${command}` : command;
+
   let output: string;
 
   try {
-    output = execSync(command, options);
+    output = execSync(wrappedCommand, options);
   } catch (err: unknown) {
     // execSync 在非零退出码时抛出 Error
     // error.stdout / error.stderr 仍包含命令输出

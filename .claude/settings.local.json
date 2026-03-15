@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git remote:*)",
+      "Read(//c/Users/ROG/.ssh/**)",
+      "Bash(ssh-keygen:*)",
+      "Bash(ssh:*)"
+    ]
+  }
+}
