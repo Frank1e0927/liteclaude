@@ -14,6 +14,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { agentLoop, BASH_TOOL } from "./agent-loop";
 import { AgentConfig, Message } from "./types";
 
+
 // ─── 配置（debug=true 可看到每次迭代的详细日志） ──────────────────────────────
 
 const client = new Anthropic();

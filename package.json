@@ -1,7 +1,7 @@
 {
   "name": "s01-agent-loop",
   "version": "1.0.0",
-  "description": "s01: The minimal agent loop — one tool + one loop = an agent",
+  "description": "s04: Subagent — delegate subtasks to child agents with isolated context",
   "main": "dist/agent.js",
   "scripts": {
     "build": "tsc",

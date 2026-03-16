@@ -10,7 +10,7 @@ import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 import * as readline from "readline";
 import { agentLoop, BASH_TOOL } from "./agent-loop";
-import { TODO_TOOL } from "./todo";
+import { TODO_TOOL, TASK_TOOL } from "./tools";
 import { AgentConfig, Message } from "./types";
 
 // ─── 配置 ────────────────────────────────────────────────────────────────────
@@ -25,9 +25,10 @@ const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5";
  */
 const SYSTEM_PROMPT = `你是一个能在 shell 环境中执行任务的 AI agent。
 
-你有两个工具：
+你有三个工具：
 - bash：执行 shell 命令，返回 stdout 和 stderr
 - update_todos：维护任务待办列表，跟踪多步任务进度
+- task：将子任务派遣给子智能体，子智能体有独立上下文，完成后只返回摘要
 
 注意：当前运行环境是 Windows，请使用 Windows cmd 命令（例如用 dir 而不是 ls，用 type 而不是 cat，用 del 而不是 rm）。
 
@@ -43,6 +44,12 @@ const SYSTEM_PROMPT = `你是一个能在 shell 环境中执行任务的 AI agen
 - 同时只能有一个任务处于 in_progress 状态
 - 所有任务完成后，将列表全部标记为 completed
 
+子智能体使用原则：
+- 当用户的任务包含 2 个及以上独立子任务时，必须用 task 工具将每个子任务派遣给子智能体
+- 当任务需要读取多个文件但只需要摘要时，用 task 派遣子智能体
+- 不要自己用 bash 完成所有事情，优先考虑用 task 拆分任务
+- 子智能体不能再派遣子智能体（只有一层深度）
+
 安全限制：
 - 不执行破坏性命令（del /f /s、format 等）
 - 不访问敏感系统文件
@@ -52,7 +59,7 @@ const CONFIG: AgentConfig = {
   model: MODEL,
   maxTokens: 4096,
   systemPrompt: SYSTEM_PROMPT,
-  tools: [BASH_TOOL, TODO_TOOL],
+  tools: [BASH_TOOL, TODO_TOOL, TASK_TOOL],
   maxIterations: 50,
   debug: process.env.DEBUG === "1",
 };

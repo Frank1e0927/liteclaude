@@ -9,7 +9,11 @@
       "Bash(git remote:*)",
       "Read(//c/Users/ROG/.ssh/**)",
       "Bash(ssh-keygen:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx tsc:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(ls:*)"
     ]
   }
 }

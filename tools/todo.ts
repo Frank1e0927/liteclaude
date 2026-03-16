@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { TodoItem } from "./types";
+import { TodoItem } from "../types";
 
 const VALID_STATUSES = new Set(["pending", "in_progress", "completed"]);
 

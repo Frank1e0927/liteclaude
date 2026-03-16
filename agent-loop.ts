@@ -22,8 +22,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { AgentConfig, AgentResult, Message, TodoItem, ToolResult } from "./types";
-import { bashTool } from "./tools";
-import { TodoManager } from "./todo";
+import { bashTool, TodoManager, runSubagent } from "./tools";
 
 // ─── Anthropic Tool 定义（JSON Schema） ─────────────────────────────────────
 
@@ -76,7 +75,8 @@ export async function agentLoop(
   const todoManager = new TodoManager();
   let roundsSinceTodo = 0;
 
-  type ToolHandler = (input: Record<string, unknown>) => string;
+  // s04: handler 改为 async，因为 task 工具需要 await 子智能体
+  type ToolHandler = (input: Record<string, unknown>) => string | Promise<string>;
   const TOOL_HANDLERS: Record<string, ToolHandler> = {
     bash: (input) => bashTool(input.command as string),
     update_todos: (input) => {
@@ -88,6 +88,8 @@ export async function agentLoop(
         return `[错误] ${(e as Error).message}`;
       }
     },
+    // s04 新增：task 工具 → 派遣子智能体
+    task: (input) => runSubagent(client, config, input.prompt as string),
   };
 
   while (iteration < maxIter) {
@@ -157,39 +159,37 @@ export async function agentLoop(
       (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
     );
 
-    const toolResults: ToolResult[] = [];
+    // s04: 所有工具调用并行执行（子智能体之间互不依赖，可以同时跑）
+    const toolResults: ToolResult[] = await Promise.all(
+      toolUseBlocks.map(async (block) => {
+        const handler = TOOL_HANDLERS[block.name];
 
-    for (const block of toolUseBlocks) {
-      const handler = TOOL_HANDLERS[block.name];
+        if (!handler) {
+          console.warn(`[warn] 未知工具: ${block.name}`);
+          return {
+            type: "tool_result" as const,
+            tool_use_id: block.id,
+            content: `错误：未知工具 "${block.name}"`,
+          };
+        }
 
-      if (!handler) {
-        // 未知工具：返回错误信息让 LLM 知道
-        console.warn(`[warn] 未知工具: ${block.name}`);
-        toolResults.push({
-          type: "tool_result",
+        console.log(`\n[tool] ${block.name}`);
+        console.log(`[cmd]  ${JSON.stringify(block.input)}`);
+
+        const startTime = Date.now();
+        const output = await Promise.resolve(handler(block.input as Record<string, unknown>));
+        const elapsed = Date.now() - startTime;
+
+        console.log(`[out]  ${output.slice(0, 200)}${output.length > 200 ? "…" : ""}`);
+        console.log(`[time] ${elapsed}ms`);
+
+        return {
+          type: "tool_result" as const,
           tool_use_id: block.id,
-          content: `错误：未知工具 "${block.name}"`,
-        });
-        continue;
-      }
-
-      // 打印工具调用信息（便于学习时观察 agent 行为）
-      console.log(`\n[tool] ${block.name}`);
-      console.log(`[cmd]  ${JSON.stringify(block.input)}`);
-
-      const startTime = Date.now();
-      const output = handler(block.input as Record<string, unknown>);
-      const elapsed = Date.now() - startTime;
-
-      console.log(`[out]  ${output.slice(0, 200)}${output.length > 200 ? "…" : ""}`);
-      console.log(`[time] ${elapsed}ms`);
-
-      toolResults.push({
-        type: "tool_result",
-        tool_use_id: block.id,
-        content: output,
-      });
-    }
+          content: output,
+        };
+      })
+    );
 
     // ⑤ 把工具结果追加到消息历史，进入下一次循环 ─────────────────────────────
     //
