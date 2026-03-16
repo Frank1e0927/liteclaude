@@ -22,7 +22,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { AgentConfig, AgentResult, Message, TodoItem, ToolResult } from "./types";
-import { bashTool, TodoManager, runSubagent } from "./tools";
+import { bashTool, loadSkill, TodoManager, runSubagent } from "./tools";
 
 // ─── Anthropic Tool 定义（JSON Schema） ─────────────────────────────────────
 
@@ -90,6 +90,13 @@ export async function agentLoop(
     },
     // s04 新增：task 工具 → 派遣子智能体
     task: (input) => runSubagent(client, config, input.prompt as string),
+    load_skill: (input) => {
+      try {
+        return loadSkill(input.name as string);
+      } catch (e) {
+        return `[错误] ${(e as Error).message}`;
+      }
+    },
   };
 
   while (iteration < maxIter) {

@@ -10,3 +10,4 @@
 export { bashTool, isSafePath } from "./bash";
 export { TodoManager, TODO_TOOL } from "./todo";
 export { runSubagent, TASK_TOOL } from "./subagent";
+export { getSkillSummaries, loadSkill, LOAD_SKILL_TOOL } from "./skill";

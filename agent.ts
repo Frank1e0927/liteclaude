@@ -10,7 +10,7 @@ import "dotenv/config";
 import Anthropic from "@anthropic-ai/sdk";
 import * as readline from "readline";
 import { agentLoop, BASH_TOOL } from "./agent-loop";
-import { TODO_TOOL, TASK_TOOL } from "./tools";
+import { getSkillSummaries, LOAD_SKILL_TOOL, TODO_TOOL, TASK_TOOL } from "./tools";
 import { AgentConfig, Message } from "./types";
 
 // ─── 配置 ────────────────────────────────────────────────────────────────────
@@ -55,11 +55,19 @@ const SYSTEM_PROMPT = `你是一个能在 shell 环境中执行任务的 AI agen
 - 不访问敏感系统文件
 - 不进行网络请求（除非用户明确要求）`;
 
+const SKILL_DIRECTORY_PROMPT = `本地安装了一些可按需加载的技能。
+只有在任务确实需要某项技能时，才调用 load_skill。
+不要假设你已经知道技能正文；只有在 load_skill 返回之后，才能依据该技能执行。
+当你需要读取某个 skill 的正文时，优先使用 load_skill，不要用 bash 直接读取 skills 目录下的 SKILL.md 来替代 skill loading。
+
+技能目录：
+${getSkillSummaries()}`;
+
 const CONFIG: AgentConfig = {
   model: MODEL,
   maxTokens: 4096,
-  systemPrompt: SYSTEM_PROMPT,
-  tools: [BASH_TOOL, TODO_TOOL, TASK_TOOL],
+  systemPrompt: `${SYSTEM_PROMPT}\n\n${SKILL_DIRECTORY_PROMPT}`,
+  tools: [BASH_TOOL, TODO_TOOL, TASK_TOOL, LOAD_SKILL_TOOL],
   maxIterations: 50,
   debug: process.env.DEBUG === "1",
 };

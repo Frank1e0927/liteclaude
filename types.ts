@@ -49,3 +49,15 @@ export interface AgentResult {
 export type TodoStatus = "pending" | "in_progress" | "completed";
 export interface TodoItem { id: string; text: string; status: TodoStatus; }
 export interface TodoInput { todos: TodoItem[]; }
+
+// s05: skill loading
+export interface SkillMeta {
+  name: string;
+  description: string;
+  dirPath: string;
+  skillFilePath: string;
+}
+
+export interface LoadedSkill extends SkillMeta {
+  content: string;
+}
